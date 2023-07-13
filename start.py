@@ -1,4 +1,5 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, request, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap
 from flask_mysqldb import MySQL
 import yaml, os
@@ -38,6 +39,21 @@ def blogs(id):
 
 @app.route("/register/", methods=["GET", "POST"])
 def register():
+    if request.method == "POST":
+        user_details = request.form
+        print(f"user_details {user_details}")
+        if user_details["password"] != user_details["confirmPassword"]:
+            flash("Password do not match.", "danger")
+            return render_template("register.html")
+        cursor = mysql.connection.cursor()
+
+        cursor.execute("INSERT INTO users(id, first_name, last_name, username, email, password) VALUES (%s, %s, %s, %s, %s, %s)",("", user_details['first_name'], user_details['last_name'], user_details['username'], user_details['email'], generate_password_hash(user_details['password'])))
+        print("cursor inside")
+        cursor.connection.commit()
+        cursor.close()
+        flash("User successfully registerd", "success")
+        return redirect("/login")
+    
     return render_template("register.html")
 
 @app.route("/login/", methods=["GET", "POST"])
